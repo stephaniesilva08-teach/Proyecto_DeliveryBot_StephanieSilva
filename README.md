@@ -11,7 +11,7 @@ El sistema administra la interacción con el cliente (menú interactivo, carrito
 
 La base de datos del sistema está centralizada en la siguiente hoja de cálculo de Google Sheets:
 
-🔗 **[Acceder a la Base de Datos en Google Sheets](https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit)** *(Reemplaza este enlace si usas otra URL)*
+🔗 **[Acceder a la Base de Datos en Google Sheets](https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit?usp=sharing)**
 
 ### 📑 Estructura de Pestañas (Hojas):
 1. **`MENU`**:
