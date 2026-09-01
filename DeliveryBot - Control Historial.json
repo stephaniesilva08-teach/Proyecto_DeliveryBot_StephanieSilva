@@ -1,0 +1,207 @@
+{
+  "name": "DeliveryBot - Control Historial",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        -16
+      ],
+      "id": "ba747fc5-2473-432c-971e-aeb46106d987",
+      "name": "Telegram Trigger (Consulta Historial)",
+      "webhookId": "a33267f8-a7d5-4b3c-b8c5-f49924942f60",
+      "credentials": {
+        "telegramApi": {
+          "id": "wx9iKBTd8vEj0Jpo",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e229c9ef-bce7-4971-bf5a-e7178044737f",
+              "leftValue": "={{ $json.message.text }}",
+              "rightValue": "/historial",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        0
+      ],
+      "id": "52618c69-d2f4-40cf-addc-475104ee18da",
+      "name": "Es Comando /historial?"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I",
+          "mode": "list",
+          "cachedResultName": "DeliveryBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1476993683,
+          "mode": "list",
+          "cachedResultName": "CARRITO",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit#gid=1476993683"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "chat_id",
+              "lookupValue": "={{ $('Telegram Trigger (Consulta Historial)').item.json.message.chat.id }}"
+            }
+          ]
+        },
+        "options": {
+          "outputFormatting": {
+            "values": {
+              "general": "FORMATTED_VALUE",
+              "date": "FORMATTED_STRING"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        0
+      ],
+      "id": "12ef5bbe-c628-42ec-b7e9-fe6adaca27d8",
+      "name": "Buscar Pedidos en HISTORIAL",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "0AbA8S5DCZWptikx",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst chatId = $('Telegram Trigger (Consulta Historial)').first().json.message.chat.id;\n\nif (!items || items.length === 0 || !items[0].json.id_pedido) {\n  return [{\n    json: {\n      chat_id: chatId,\n      mensaje: '📜 *Historial de Pedidos*\\n\\nActualmente no tienes pedidos registrados en tu historial.'\n    }\n  }];\n}\n\nlet texto = '📜 *Tus Últimos Pedidos Realizados:*\\n\\n';\n\n// Mostrar los últimos 5 pedidos ordenados\nconst ultimos = items.slice(-5).reverse();\n\nultimos.forEach(item => {\n  const row = item.json;\n  texto += `🔹 *Pedido #${row.id_pedido}* - _${row.fecha_entrega}_\\n`;\n  texto += `🛒 *Detalle:* ${row.detalle}\\n`;\n  texto += `📍 *Dirección:* ${row.datos_entrega}\\n`;\n  texto += `💵 *Total:* $${row.total}\\n`;\n  texto += `----------------------------------\\n`;\n});\n\nreturn [{\n  json: {\n    chat_id: chatId,\n    mensaje: texto\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "9ccb6155-f7ba-434b-a8dd-c69cd469e2d1",
+      "name": "Formatear Mensaje Historial"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.mensaje }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        0
+      ],
+      "id": "c179989f-9ddb-4d65-8fef-3cdb8d8d1c9f",
+      "name": "Enviar Historial al Cliente",
+      "webhookId": "8e251704-f006-45e4-9fe6-8e4535ee5c49",
+      "credentials": {
+        "telegramApi": {
+          "id": "wx9iKBTd8vEj0Jpo",
+          "name": "Telegram account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger (Consulta Historial)": {
+      "main": [
+        [
+          {
+            "node": "Es Comando /historial?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es Comando /historial?": {
+      "main": [
+        [
+          {
+            "node": "Buscar Pedidos en HISTORIAL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Pedidos en HISTORIAL": {
+      "main": [
+        [
+          {
+            "node": "Formatear Mensaje Historial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Mensaje Historial": {
+      "main": [
+        [
+          {
+            "node": "Enviar Historial al Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "2fe9639b-0946-42e6-ad34-d97fb128fd05",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f27697d383272b0379b80efb0d1a8600fc9c3e4f304b2f6206d6bc6c3d6963a6"
+  },
+  "nodeGroups": [],
+  "id": "ixQXQRBnthJxkwTV",
+  "tags": []
+}

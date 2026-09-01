@@ -1,0 +1,267 @@
+{
+  "name": "DeliveryBot - Direcciones",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        -16
+      ],
+      "id": "0d83db1a-b714-4d31-b39b-202d42abd6ee",
+      "name": "Telegram Trigger (Cliente)",
+      "webhookId": "7da0447e-fe89-4a91-8ede-e9b0532b8bf5",
+      "credentials": {
+        "telegramApi": {
+          "id": "0zBlwhc5vOE5H3Xx",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I",
+          "mode": "list",
+          "cachedResultName": "DeliveryBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1476993683,
+          "mode": "list",
+          "cachedResultName": "CARRITO",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit#gid=1476993683"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "chat_id",
+              "lookupValue": "={{ $json.message.chat.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "a391ef57-1d4f-4706-aed4-ce04bf6e9285",
+      "name": "Buscar Cliente en Sheets",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "0AbA8S5DCZWptikx",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e8d69ce1-a2c3-42e6-81cf-50dbd6fb35cf",
+              "leftValue": "={{ $json.estado_conversacion }}",
+              "rightValue": "ESPERANDO_DATOS_ENTREGA",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        0
+      ],
+      "id": "f0edb7eb-7acd-479f-8b56-e40d13ce8732",
+      "name": "If (Esperando Datos?)"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I",
+          "mode": "list",
+          "cachedResultName": "DeliveryBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1476993683,
+          "mode": "list",
+          "cachedResultName": "CARRITO",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit#gid=1476993683"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "datos_entrega": "={{ $('Telegram Trigger (Cliente)').item.json.message.text }}",
+            "estado_conversacion": "DATOS_RECIBIDOS",
+            "chat_id": "={{ $('Telegram Trigger (Cliente)').item.json.message.chat.id }}"
+          },
+          "matchingColumns": [
+            "chat_id"
+          ],
+          "schema": [
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "datos_entrega",
+              "displayName": "datos_entrega",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "estado_conversacion",
+              "displayName": "estado_conversacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        0
+      ],
+      "id": "7ee09bbd-753a-4f15-85a8-e11ff5bfe424",
+      "name": "Guardar Datos Entrega",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "0AbA8S5DCZWptikx",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger (Cliente)').item.json.message.chat.id }}",
+        "text": "=✅ *¡Dirección registrada correctamente!*\n\n📍 *Destino:* {{ $('Telegram Trigger (Cliente)').item.json.message.text }}\n\nTu pedido continúa en preparación 👨‍🍳. Te avisaremos apenas vaya en camino con el repartidor 🛵.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        896,
+        0
+      ],
+      "id": "dd2b1295-08de-4979-ab19-beaf07564bd0",
+      "name": "Confirmar al Cliente",
+      "webhookId": "e2fc6a45-a1ef-4e25-8632-58b2399b2858",
+      "credentials": {
+        "telegramApi": {
+          "id": "0zBlwhc5vOE5H3Xx",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger (Cliente)": {
+      "main": [
+        [
+          {
+            "node": "Buscar Cliente en Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Cliente en Sheets": {
+      "main": [
+        [
+          {
+            "node": "If (Esperando Datos?)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If (Esperando Datos?)": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Guardar Datos Entrega",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Datos Entrega": {
+      "main": [
+        [
+          {
+            "node": "Confirmar al Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "493e015b-c5a6-4d8f-9097-10a302087dde",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f27697d383272b0379b80efb0d1a8600fc9c3e4f304b2f6206d6bc6c3d6963a6"
+  },
+  "nodeGroups": [],
+  "id": "4qzX73mJznR0hiDT",
+  "tags": []
+}

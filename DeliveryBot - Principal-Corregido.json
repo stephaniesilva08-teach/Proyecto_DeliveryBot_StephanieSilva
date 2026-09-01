@@ -1,0 +1,287 @@
+{
+  "name": "DeliveryBot - Principal-Corregido",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message",
+          "callback_query"
+        ],
+        "additionalFields": {}
+      },
+      "id": "d3021601-8985-46de-a9aa-186a182f46eb",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [
+        -992,
+        80
+      ],
+      "webhookId": "bca1e581-d29e-47c0-8048-b4e67fb574b9",
+      "credentials": {
+        "telegramApi": {
+          "id": "0zBlwhc5vOE5H3Xx",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ !!$json.callback_query }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "1882a985-7fe7-4aa1-aa9b-f695e098b1ef",
+      "name": "¿Es Clic en Botón?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -752,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ \n  $json.callback_query \n    ? ($json.callback_query.data.startsWith('cat_') \n        ? 'REALIZAR_PEDIDO' \n        : ($json.callback_query.data === 'ver_carrito' ? 'VER_CARRITO' : 'VER_ESTADO')) \n    : ($json.intencion || 'SALUDAR_Y_MENU') \n}}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "SALUDAR_Y_MENU"
+            }
+          ]
+        },
+        "fallbackOutput": "={{ 3 }}"
+      },
+      "id": "e1bc4522-9000-4a3c-82bd-04ac1c84c86e",
+      "name": "Router por Intención",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        -352,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $node[\"Telegram Trigger\"].json.message ? $node[\"Telegram Trigger\"].json.message.chat.id : $node[\"Telegram Trigger\"].json.callback_query.message.chat.id }}",
+        "text": "=¡Hola! 👋 Bienvenido a DeliveryBot. Selecciona una opción para realizar tu pedido:",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "🥤 Bebidas",
+                    "additionalFields": {
+                      "callback_data": "bebidas"
+                    }
+                  },
+                  {
+                    "text": "🥪 Comidas",
+                    "additionalFields": {
+                      "callback_data": "comidas"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "🍿 Snacks",
+                    "additionalFields": {
+                      "callback_data": "snacks"
+                    }
+                  },
+                  {
+                    "text": "🛒 Ver Carrito",
+                    "additionalFields": {
+                      "callback_data": "carrito"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "📝 Historial / Estado",
+                    "additionalFields": {
+                      "callback_data": "estado"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {}
+      },
+      "id": "42c924e4-574f-4084-8e4a-d9761152efa3",
+      "name": "Enviar Bienvenida y Menú",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        -96
+      ],
+      "webhookId": "00dbd603-ecf7-4073-a949-e4ee75df118d",
+      "credentials": {
+        "telegramApi": {
+          "id": "0zBlwhc5vOE5H3Xx",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $items(\"Telegram Trigger\")[0].json;\nconst text = (input.message?.text || \"\").toLowerCase().trim();\n\n// 1. Leemos el estado actual del usuario desde el nodo anterior (Google Sheets / Sesión)\nconst estadoConversacion = $json.datos_entrega || \"\";\n\nlet intencion = \"DESCONOCIDO\";\n\n// 2. Si el usuario está esperando enviar su dirección, priorizamos esa intención\nif (estadoConversacion === \"DATOS_ENTREGA\") {\n  intencion = \"DATOS_ENTREGA\";\n} else if (text.includes(\"hola\") || text.includes(\"menu\") || text.includes(\"menú\") || text === \"/start\") {\n  intencion = \"SALUDAR_Y_MENU\";\n} else if (text.includes(\"carrito\") || text.includes(\"pagar\")) {\n  intencion = \"VER_CARRITO\";\n} else if (text.includes(\"estado\") || text.includes(\"historial\") || text.includes(\"pedido\")) {\n  intencion = \"VER_ESTADO\";\n}\n\nreturn [{ json: { intencion, text } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -544,
+        144
+      ],
+      "id": "d76a21f9-6eb3-4420-afd5-eaab943f61bf",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "jJ9IYQMGAVdaa6p1",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/jJ9IYQMGAVdaa6p1",
+          "cachedResultName": "Sistema de Pedidos - Completo"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chatId": "={{ $json.callback_query.message.chat.id }}",
+            "data": "={{ $json.callback_query.data }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "chatId",
+              "displayName": "chatId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -96,
+        192
+      ],
+      "id": "e8de11d4-3df2-48b6-9cf2-05e07a1d0386",
+      "name": "Call 'Sistema de Pedidos - Telegram, Sheets y Gmail (Completo)'"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "¿Es Clic en Botón?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Es Clic en Botón?": {
+      "main": [
+        [
+          {
+            "node": "Router por Intención",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router por Intención": {
+      "main": [
+        [
+          {
+            "node": "Enviar Bienvenida y Menú",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [],
+        [],
+        [
+          {
+            "node": "Call 'Sistema de Pedidos - Telegram, Sheets y Gmail (Completo)'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Router por Intención",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "0a7ad67a-a369-46d2-8dfa-ae4443b0a64f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f27697d383272b0379b80efb0d1a8600fc9c3e4f304b2f6206d6bc6c3d6963a6"
+  },
+  "nodeGroups": [],
+  "id": "Ta03UOx0FcEs41jV",
+  "tags": []
+}

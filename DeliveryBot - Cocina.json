@@ -1,0 +1,535 @@
+{
+  "name": "DeliveryBot - Cocina",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "callback_query"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        -1328,
+        208
+      ],
+      "id": "bb7713b3-331c-457d-9c03-d67a7c6ea155",
+      "name": "Telegram Trigger (Cocina)",
+      "webhookId": "a47eb700-4200-49db-b8b1-b5826611d6ff",
+      "credentials": {
+        "telegramApi": {
+          "id": "wx9iKBTd8vEj0Jpo",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ba977d6a-257c-4693-a87b-bbd174b599dc",
+              "leftValue": "={{ $json.callback_query.data }}",
+              "rightValue": "estado_",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1104,
+        208
+      ],
+      "id": "9602a7cb-19b3-481b-aa8b-d10598115b61",
+      "name": "If (Es Estado)"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.item.json.body || $input.item.json;\nconst callbackQuery = body.callback_query;\nconst data = callbackQuery.data;\nconst [accionRaw, idPedido] = data.split(':');\n\nconst mapaEstados = {\n  estado_preparacion: { tipo: 'preparacion', texto: 'En Preparación', emoji: '👨‍🍳' },\n  estado_encamino:    { tipo: 'encamino',    texto: 'En Camino',       emoji: '🛵' },\n  estado_entregado:   { tipo: 'entregado',   texto: 'Entregado',       emoji: '✅' }\n};\n\nconst estado = mapaEstados[accionRaw] || { tipo: 'desconocido', texto: 'Actualizado', emoji: '🔄' };\n\nreturn [{\n  json: {\n    id_pedido: idPedido,\n    accion: accionRaw,\n    tipo_estado: estado.tipo,\n    estado_texto: estado.texto,\n    estado_emoji: estado.emoji,\n    callback_query_id: callbackQuery.id,\n    chat_id_cocina: callbackQuery.message.chat.id,\n    message_id_cocina: callbackQuery.message.message_id\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -880,
+        208
+      ],
+      "id": "5c2dbef7-1313-472f-9a0d-06918887b5b9",
+      "name": "Parsear Callback Cocina"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I",
+          "mode": "list",
+          "cachedResultName": "DeliveryBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1476993683,
+          "mode": "list",
+          "cachedResultName": "CARRITO",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit#gid=1476993683"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "id_pedido",
+              "lookupValue": "={{ $json.id_pedido }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -672,
+        208
+      ],
+      "id": "e00cac9a-541e-4cad-894d-f48459e6ff36",
+      "name": "Buscar Pedido en Sheets",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "0AbA8S5DCZWptikx",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I",
+          "mode": "list",
+          "cachedResultName": "DeliveryBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1476993683,
+          "mode": "list",
+          "cachedResultName": "CARRITO",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit#gid=1476993683"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "estado": "={{ $('Parsear Callback Cocina').item.json.estado_texto }}",
+            "estado_conversacion": "={{ $('Parsear Callback Cocina').item.json.tipo_estado === 'preparacion' ? 'ESPERANDO_DATOS_ENTREGA' : ($('Parsear Callback Cocina').item.json.tipo_estado === 'entregado' ? 'FINALIZADO' : $json.estado_conversacion) }}",
+            "id_pedido": "={{ $('Parsear Callback Cocina').item.json.id_pedido }}"
+          },
+          "matchingColumns": [
+            "id_pedido"
+          ],
+          "schema": [
+            {
+              "id": "id_pedido",
+              "displayName": "id_pedido",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "estado_conversacion",
+              "displayName": "estado_conversacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -480,
+        208
+      ],
+      "id": "472ffac1-fb1e-45fe-974c-adfcea2321e8",
+      "name": "Actualizar Estado en Sheets",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "0AbA8S5DCZWptikx",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Parsear Callback Cocina').item.json.tipo_estado }}",
+                    "rightValue": "preparacion",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Parsear Callback Cocina').item.json.tipo_estado }}",
+                    "rightValue": "encamino",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Parsear Callback Cocina').item.json.tipo_estado }}",
+                    "rightValue": "entregado",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -256,
+        208
+      ],
+      "id": "dcca5cab-2909-49f7-a889-adc801020b82",
+      "name": "Switch (Tipo de Estado)"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('If (Es Estado)').item.json.callback_query.message.chat.id }}",
+        "text": "=👨‍🍳 *¡Tu pedido #{{ $('Parsear Callback Cocina').item.json.id_pedido }} ya está en preparación!*\n\nEstamos cocinando tu orden con los mejores ingredientes.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "5eca9d83-0578-47bf-8160-f150b1fa94ac",
+      "name": "Aviso: En Preparación",
+      "webhookId": "96246e5f-1954-4bf7-a8f5-c1cb0211b901",
+      "credentials": {
+        "telegramApi": {
+          "id": "0zBlwhc5vOE5H3Xx",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.result.chat.id }}",
+        "text": "📍 *¡Casi listos para enviar tu pedido!*\n\nPor favor, responde a este mensaje enviando tu *Dirección de entrega* y *Teléfono de contacto*.\n\n_Ejemplo:_ Calle 10 #2-35, Apto 201 - Tel: 3001234567",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "34e4fa20-1311-4a0f-83c2-0367c35954b8",
+      "name": "Solicitar Dirección",
+      "webhookId": "257d54c8-9316-4e7e-aa77-0f36c7ab26b6",
+      "credentials": {
+        "telegramApi": {
+          "id": "0zBlwhc5vOE5H3Xx",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger (Cocina)').item.json.callback_query.message.chat.id }}",
+        "text": "=🛵 *¡Tu pedido #{{ $('Parsear Callback Cocina').item.json.id_pedido }} va en camino!*\n\n📍 *Dirección de entrega:* {{ $('Buscar Pedido en Sheets').item.json.datos_entrega || 'Dirección registrada en el pedido' }}\n\nNuestro repartidor llegará en unos minutos. ¡Atento a tu teléfono!",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        208
+      ],
+      "id": "568b979f-682e-4571-bcd2-c948eb02f3d9",
+      "name": "Aviso: En Camino",
+      "webhookId": "84e78360-b028-45e7-b0e7-51c9bbe58214",
+      "credentials": {
+        "telegramApi": {
+          "id": "0zBlwhc5vOE5H3Xx",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8990557109:AAFbokumW3IsMIUi44reJ4bH-U2AduYmrhc/answerCallbackQuery",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"callback_query_id\": \"{{ $('Parsear Callback Cocina').item.json.callback_query_id }}\",\n  \"text\": \"Estado actualizado a: {{ $('Parsear Callback Cocina').item.json.estado_texto }}\",\n  \"show_alert\": false\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        512,
+        208
+      ],
+      "id": "2a760ecd-1355-4ed4-93ce-4a94af7a15dd",
+      "name": "Answer Callback Query Cocina"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Parsear Callback Cocina').item.json.chat_id_cocina }}",
+        "text": "==🍽️ *PEDIDO #{{ $('Parsear Callback Cocina').item.json.id_pedido }}*\n\nEstado actual: {{ $('Parsear Callback Cocina').item.json.estado_emoji }} *{{ $('Parsear Callback Cocina').item.json.estado_texto }}*\n\n📍 *Datos de Entrega:* {{ $('Buscar Pedido en Sheets').item.json.datos_entrega || 'Dirección registrada en el pedido' }}",
+        "replyMarkup": "={\n  \"inline_keyboard\": [\n    [\n      {\n        \"text\": \"🛵 En Camino\",\n        \"callback_data\": \"=estado_encamino:{{ $('Parsear Callback Cocina').item.json.id_pedido }}\"\n      }\n    ],\n    [\n      {\n        \"text\": \"✅ Entregado\",\n        \"callback_data\": \"=estado_entregado:{{ $('Parsear Callback Cocina').item.json.id_pedido }}\"\n      }\n    ]\n  }\n}",
+        "forceReply": {},
+        "replyKeyboardOptions": {},
+        "replyKeyboardRemove": {},
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        736,
+        208
+      ],
+      "id": "dc36f0c9-5648-461f-8751-d9f830e61edb",
+      "name": "Send a text message",
+      "webhookId": "16e3d818-cd74-475f-be39-86e89fb88dde",
+      "credentials": {
+        "telegramApi": {
+          "id": "wx9iKBTd8vEj0Jpo",
+          "name": "Telegram account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger (Cocina)": {
+      "main": [
+        [
+          {
+            "node": "If (Es Estado)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If (Es Estado)": {
+      "main": [
+        [
+          {
+            "node": "Parsear Callback Cocina",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parsear Callback Cocina",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsear Callback Cocina": {
+      "main": [
+        [
+          {
+            "node": "Buscar Pedido en Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Pedido en Sheets": {
+      "main": [
+        [
+          {
+            "node": "Actualizar Estado en Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar Estado en Sheets": {
+      "main": [
+        [
+          {
+            "node": "Switch (Tipo de Estado)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch (Tipo de Estado)": {
+      "main": [
+        [
+          {
+            "node": "Aviso: En Preparación",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aviso: En Camino",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Aviso: En Preparación": {
+      "main": [
+        [
+          {
+            "node": "Solicitar Dirección",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Solicitar Dirección": {
+      "main": [
+        [
+          {
+            "node": "Answer Callback Query Cocina",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aviso: En Camino": {
+      "main": [
+        [
+          {
+            "node": "Answer Callback Query Cocina",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer Callback Query Cocina": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "66df9472-7752-4fbd-ae37-0167d5d04455",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f27697d383272b0379b80efb0d1a8600fc9c3e4f304b2f6206d6bc6c3d6963a6"
+  },
+  "nodeGroups": [],
+  "id": "qgoXrpV8XKwXlwHg",
+  "tags": []
+}
