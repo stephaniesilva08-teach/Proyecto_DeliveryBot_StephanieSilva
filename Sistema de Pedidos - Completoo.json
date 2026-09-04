@@ -1,0 +1,1850 @@
+{
+  "name": "Sistema de Pedidos - Completoo",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "data"
+            },
+            {
+              "name": "chatId",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "id": "f5759959-6c0c-4dd4-b8a3-1ab18cea4bd8",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.data }}",
+                    "rightValue": "p_id=",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    },
+                    "id": "c1a1a1a1-0002-0002-0002-000000000002"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Producto Seleccionado"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "61d15b69-c582-4ea9-9c04-b28f62c70f88",
+                    "leftValue": "={{ $json.data }}",
+                    "rightValue": "action=confirmar_final",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Confirmar final"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "5121dfb7-ecff-4aa0-8952-2f61a55822bb",
+                    "leftValue": "={{ $json.data }}",
+                    "rightValue": "action=menu",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "botones"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "a1cancel-carrito-0001",
+                    "leftValue": "={{ $json.data }}",
+                    "rightValue": "action=cancelar_carrito",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Cancelar Carrito"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "a2cancel-pedido-0002",
+                    "leftValue": "={{ $json.data }}",
+                    "rightValue": "action=cancelar_pedido",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Cancelar Pedido"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "b9ab3dea-f7a3-41da-ad1f-f43fcf992ee9",
+      "name": "Switch Accion",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Capturar variables del nodo trigger de forma segura\nconst inputData = $('When Executed by Another Workflow').item.json;\nconst callbackData = String(inputData.data || inputData.callback_query?.data || '');\nconst chatId = inputData.chatId || inputData.chat_id || inputData.callback_query?.message?.chat?.id || '000000';\n\n// 2. Extraer el ID del producto (soporta formatos: \"p_id=P001\" o \"confirmar_P001\")\nlet prodId = 'P001';\nif (callbackData.includes('=')) {\n  prodId = callbackData.split('=')[1] || 'P001';\n} else if (callbackData.includes('_')) {\n  prodId = callbackData.split('_')[1] || 'P001';\n} else {\n  prodId = callbackData;\n}\n\n// 3. Cantidad por defecto para el primer clic\nconst qty = 1;\n\n// 4. Generar ID único de pedido (PED-XXXXXX)\nconst timestamp = Date.now().toString().slice(-5);\nconst random = Math.floor(Math.random() * 90 + 10);\nconst idPedido = `PED-${timestamp}${random}`;\n\nreturn {\n  json: {\n    chat_id: chatId,\n    id_pedido: idPedido,\n    prod_id: prodId,\n    cantidad: qty,\n    fecha: new Date().toISOString()\n  }\n};"
+      },
+      "id": "775e55c8-b11c-4ddd-91d3-bdc2d4d843e2",
+      "name": "Procesar Pedido e ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I",
+          "mode": "list",
+          "cachedResultName": "DeliveryBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "MENU",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "524e4bd5-17ad-430f-af58-f38c8cf97a57",
+      "name": "Leer Stock Actual",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        672,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "JzZ0r8hPGSWmBsYw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Datos recibidos de Procesar Pedido e ID\nconst pedido = $('Procesar Pedido e ID').item.json;\n\n// 2. Buscamos el producto coincidente en Leer Stock Actual\nconst productos = $('Leer Stock Actual').all().map(item => item.json);\nconst productoEncontrado = productos.find(p => String(p.id_producto) === String(pedido.prod_id)) || {};\n\n// 3. Obtenemos datos del producto\nconst nombreProducto = productoEncontrado.nombre || 'Producto Desconocido';\nconst precioUnitario = Number(productoEncontrado.precio || 0);\nconst stockActual = Number(productoEncontrado.stock || 0);\nconst disponible = String(productoEncontrado.disponible || 'NO').trim().toUpperCase();\n\n// 4. Cálculos\nconst cantidad = Number(pedido.cantidad || 1);\nconst stockNuevo = stockActual - cantidad;\nconst total = cantidad * precioUnitario;\n\nreturn {\n  json: {\n    chat_id: pedido.chat_id,\n    id_pedido: pedido.id_pedido,\n    prod_id: pedido.prod_id,\n    nombre: nombreProducto,\n    precio: precioUnitario,\n    cantidad: cantidad,\n    total: total,\n    fecha: pedido.fecha,\n    stock_anterior: stockActual,\n    stock_nuevo: stockNuevo,\n    disponible: disponible\n  }\n};"
+      },
+      "id": "9b2e8abd-ef96-4433-ac7a-8f6a7172236f",
+      "name": "Calcular Nuevo Stock",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "es-disponible",
+              "leftValue": "={{ $json.disponible }}",
+              "rightValue": "SI",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "stock-suficiente",
+              "leftValue": "={{ $json.stock_nuevo }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1b0890da-3a4b-45c3-bf86-c551666a8952",
+      "name": "Hay Stock y Disponible?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I",
+          "mode": "list",
+          "cachedResultName": "DeliveryBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "=gid=0",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id_producto": "={{ $json.prod_id }}",
+            "stock": "={{ $json.stock_nuevo }}"
+          },
+          "matchingColumns": [
+            "id_producto"
+          ],
+          "schema": [
+            {
+              "id": "id_producto",
+              "displayName": "id_producto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nombre",
+              "displayName": "nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "descripcion",
+              "displayName": "descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "precio",
+              "displayName": "precio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "categoria",
+              "displayName": "categoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "stock",
+              "displayName": "stock",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "disponible",
+              "displayName": "disponible",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "b4a066f4-7e73-4d9f-92dd-6b5c5331f155",
+      "name": "Actualizar Stock",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1376,
+        -160
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "JzZ0r8hPGSWmBsYw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I",
+          "mode": "list",
+          "cachedResultName": "DeliveryBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 641624570,
+          "mode": "list",
+          "cachedResultName": "PEDIDOS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit#gid=641624570"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ $json.chat_id }}",
+            "id_pedido": "={{ $json.id_pedido }}",
+            "prod_id": "={{ $json.prod_id }}",
+            "cantidad": "={{ $json.cantidad }}",
+            "resumen": "={{ $json.resumen }}",
+            "total": "={{ $json.total }}",
+            "fecha": "={{ $json.fecha }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "id_pedido",
+              "displayName": "id_pedido",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "prod_id",
+              "displayName": "prod_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "cantidad",
+              "displayName": "cantidad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "resumen",
+              "displayName": "resumen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "total",
+              "displayName": "total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "857d06f3-dfce-476a-9921-47cd80724380",
+      "name": "Guardar en Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1584,
+        -160
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "JzZ0r8hPGSWmBsYw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I",
+          "mode": "list",
+          "cachedResultName": "DeliveryBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1476993683,
+          "mode": "list",
+          "cachedResultName": "CARRITO",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit#gid=1476993683"
+        },
+        "options": {}
+      },
+      "id": "cb288ecb-2ffe-47c8-bd18-1c74113ebe9e",
+      "name": "Get row(s) in sheet1",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1776,
+        -160
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "JzZ0r8hPGSWmBsYw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Obtenemos lo que devolvió la búsqueda en Google Sheets\nconst filasSheets = $input.all();\nconst primerRegistro = filasSheets[0]?.json || {};\n\n// 2. Obtenemos la información del nuevo producto recién seleccionado\nconst itemNuevo = $('Calcular Nuevo Stock').first().json;\n\nconst chatId = itemNuevo.chat_id || itemNuevo.chatId || primerRegistro.chat_id;\nconst nomNuevo = itemNuevo.nombre || 'Producto';\nconst cantNueva = Number(itemNuevo.cantidad || 1);\nconst subNuevo = Number(itemNuevo.total || (cantNueva * Number(itemNuevo.precio || 0)));\n\n// 3. Leemos lo que ya tenía guardado en la columna \"detalle\" y \"total\"\nlet detalleExistente = primerRegistro.detalle || '';\nlet totalExistente = Number(primerRegistro.total || 0);\n\nlet detalleFinal = '';\nlet totalFinal = 0;\n\nif (detalleExistente && String(detalleExistente).trim() !== '') {\n  // Si ya existía un pedido, concatenamos en una línea nueva\n  detalleFinal = `${detalleExistente}\\n• ${cantNueva}x ${nomNuevo} ($${subNuevo})`;\n  totalFinal = totalExistente + subNuevo;\n} else {\n  // Si es el primer producto del carrito\n  detalleFinal = `• ${cantNueva}x ${nomNuevo} ($${subNuevo})`;\n  totalFinal = subNuevo;\n}\n\nreturn {\n  json: {\n    chat_id: chatId,\n    detalle: detalleFinal,\n    total: totalFinal,\n    estado: 'borrador'\n  }\n};"
+      },
+      "id": "03f49921-dda6-4458-bce2-b0ca2ba92ada",
+      "name": "Armar Resumen Carrito",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1984,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I",
+          "mode": "list",
+          "cachedResultName": "DeliveryBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1476993683,
+          "mode": "list",
+          "cachedResultName": "CARRITO",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit#gid=1476993683"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ $json.chat_id }}",
+            "detalle": "={{ $json.detalle }}",
+            "total": "={{ $json.total }}",
+            "estado": "={{ $json.estado }}"
+          },
+          "matchingColumns": [
+            "chat_id"
+          ],
+          "schema": [
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "detalle",
+              "displayName": "detalle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "total",
+              "displayName": "total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "b4febd0e-08a6-4ad9-90fd-bb3226f8185e",
+      "name": "Append or update row in sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2208,
+        -160
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "JzZ0r8hPGSWmBsYw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot8487284251:AAFf534XZGimwVNPY13H-3ONP9l-vOTeqkY/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chat_id\": {{ $json.chat_id }},\n  \"text\": {{ JSON.stringify(\"🛒 *Resumen de tu pedido:*\\n\" + $json.detalle + \"\\n\\n*Total:* $\" + $json.total + \"\\n\\n¿Qué deseas hacer?\") }},\n  \"parse_mode\": \"Markdown\",\n  \"reply_markup\": {\n    \"inline_keyboard\": [\n      [\n        { \"text\": \"➕ Agregar otro\", \"callback_data\": \"action=menu\" }\n      ],\n      [\n        { \"text\": \"✅ Confirmar Pedido\", \"callback_data\": \"action=confirmar_final\" }\n      ],\n      [\n        { \"text\": \"⬅️ Volver al Menú\", \"callback_data\": \"action=menu\" }\n      ],\n      [\n        { \"text\": \"❌ Cancelar Pedido\", \"callback_data\": \"action=cancelar_carrito\" }\n      ]\n    ]\n  }\n}",
+        "options": {}
+      },
+      "id": "5c919396-427d-4b43-b0de-86ae846b6343",
+      "name": "Confirmar Carrito",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2432,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Calcular Nuevo Stock').item.json.chat_id }}",
+        "text": "=😕 Lo sentimos, *{{ $('Calcular Nuevo Stock').item.json.nombre }}* no está disponible en este momento (sin stock). Por favor elige otro producto del menú. 🙏",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "df7025a4-6fef-45e0-8eb6-3de7b23c3e86",
+      "name": "Aviso: Sin Stock",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1360,
+        16
+      ],
+      "webhookId": "9a6cb6e2-cda3-43fd-a2a3-3e6dbce5dc7a",
+      "credentials": {
+        "telegramApi": {
+          "id": "CrAL9EiCdLr9gENv",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I",
+          "mode": "list",
+          "cachedResultName": "DeliveryBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1476993683,
+          "mode": "list",
+          "cachedResultName": "CARRITO",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit#gid=1476993683"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "chat_id",
+              "lookupValue": "={{ $json.chatId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6f4edfa5-4f17-4801-9ee4-9b3cea9bef24",
+      "name": "Get row(s) in sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        192
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "JzZ0r8hPGSWmBsYw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Leemos la fila recuperada de Google Sheets\nconst filaCarrito = $input.first()?.json || {};\n\nconst chatId = filaCarrito.chat_id || $json.chatId || $json.chat_id;\nconst detalleTexto = filaCarrito.detalle || 'Sin detalle de productos';\nconst totalPagar = Number(filaCarrito.total || 0);\n\n// Generamos un ID de pedido único\nconst idPedido = \"PED-\" + Math.floor(100000 + Math.random() * 900000);\n\n// Convertimos el texto de la columna 'detalle' a formato HTML (cambiando saltos de línea por <br>)\nconst detalleHTML = String(detalleTexto).replace(/\\n/g, '<br>');\n\nreturn {\n  json: {\n    chat_id: chatId,\n    id_pedido: idPedido,\n    detalle_html: detalleHTML,\n    detalle_texto: detalleTexto,\n    total: totalPagar,\n    fecha: new Date().toISOString()\n  }\n};"
+      },
+      "id": "053e796f-bb88-48e5-8b38-676a929b8249",
+      "name": "Code in JavaScript",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cart-has-total",
+              "leftValue": "={{ $json.total }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "53775c97-6051-42f9-8163-dbbe62598041",
+      "name": "Carrito Con Items?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1088,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I",
+          "mode": "list",
+          "cachedResultName": "DeliveryBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1476993683,
+          "mode": "list",
+          "cachedResultName": "CARRITO",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit#gid=1476993683"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ $('Code in JavaScript').item.json.chat_id }}",
+            "id_pedido": "={{ $('Code in JavaScript').item.json.id_pedido }}",
+            "estado": "recibido"
+          },
+          "matchingColumns": [
+            "chat_id"
+          ],
+          "schema": [
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "id_pedido",
+              "displayName": "id_pedido",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "detalle",
+              "displayName": "detalle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "total",
+              "displayName": "total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "ec3a352e-8665-4bbe-943a-84e0b00d701c",
+      "name": "Estampar ID en Carrito",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1328,
+        176
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "JzZ0r8hPGSWmBsYw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot8487284251:AAFf534XZGimwVNPY13H-3ONP9l-vOTeqkY/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chat_id\": \"8438660376\",\n  \"text\": {{ JSON.stringify(\"🍽️ *¡NUEVO PEDIDO RECIBIDO! #\" + $('Code in JavaScript').item.json.id_pedido + \"*\\n\\n📋 *Detalle:*\\n\" + $('Code in JavaScript').item.json.detalle_texto + \"\\n\\n💰 *Total:* $\" + $('Code in JavaScript').item.json.total + \"\\n\\nEstado actual: 🟡 *Recibido*\") }},\n  \"parse_mode\": \"Markdown\",\n  \"reply_markup\": {\n    \"inline_keyboard\": [\n      [\n        {\n          \"text\": \"👨‍🍳 En Preparación\",\n          \"callback_data\": \"estado_preparacion:{{ $('Code in JavaScript').item.json.id_pedido }}\"\n        },\n        {\n          \"text\": \"🛵 En Camino\",\n          \"callback_data\": \"estado_encamino:{{ $('Code in JavaScript').item.json.id_pedido }}\"\n        }\n      ],\n      [\n        {\n          \"text\": \"📜 Historial\",\n          \"callback_data\": \"ver_historial:{{ $('Code in JavaScript').item.json.id_pedido }}\"\n        }\n      ]\n    ]\n  }\n}",
+        "options": {}
+      },
+      "id": "abe0b39b-f4a8-4ffb-a6bd-fbb5b6c33d41",
+      "name": "HTTP Request1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1536,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id || $('Code in JavaScript').item.json.chat_id }}",
+        "text": "=¡Tu pedido *#{{ $('Code in JavaScript').item.json.id_pedido }}* ha sido registrado con éxito! 🎉\n\nLa comanda ya fue enviada a la cocina 👩‍🍳 y te avisaremos cuando esté lista.\n\nSi necesitas cancelar, usa el botón de abajo (solo mientras el pedido no esté en preparación).",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "❌ Cancelar Pedido",
+                    "additionalFields": {
+                      "callback_data": "action=cancelar_pedido"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "d5adf1ab-6683-483c-bb33-5b40d46b5bf7",
+      "name": "Confirmar al Cliente (Telegram)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1760,
+        176
+      ],
+      "webhookId": "ea01c46c-0b0d-4531-87c6-d57800ea3ae1",
+      "credentials": {
+        "telegramApi": {
+          "id": "CrAL9EiCdLr9gENv",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Code in JavaScript').item.json.chat_id }}",
+        "text": "🛒 Tu carrito está vacío. Agrega al menos un producto del menú antes de confirmar tu pedido.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "2a4421d0-9c0b-409b-945c-a57646519e00",
+      "name": "Aviso: Carrito Vacío",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1376,
+        384
+      ],
+      "webhookId": "6f8c07d5-0d68-4f9c-b07d-17bbc1ae2a57",
+      "credentials": {
+        "telegramApi": {
+          "id": "CrAL9EiCdLr9gENv",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('When Executed by Another Workflow').item.json.chatId }}",
+        "text": "🌙 *Cafetería Cerrada.* Nuestro horario es de Lunes a Viernes, 8am a 5pm. ¡Te esperamos mañana!",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "7d7f0dd4-ed29-4cdb-b75c-d409070be5f3",
+      "name": "Aviso: Cafetería Cerrada",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        736,
+        384
+      ],
+      "webhookId": "aa80b1b8-89e4-4de2-9089-e1cd3f894906",
+      "credentials": {
+        "telegramApi": {
+          "id": "CrAL9EiCdLr9gENv",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot8487284251:AAFf534XZGimwVNPY13H-3ONP9l-vOTeqkY/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chat_id\": {{ $json.chatId || $json.chat_id }},\n  \"text\": \"🍽️ *Menú Principal*\\n\\nSelecciona una categoría para ver nuestros productos:\",\n  \"parse_mode\": \"Markdown\",\n  \"reply_markup\": {\n    \"inline_keyboard\": [\n      [\n        { \"text\": \"🥤 Bebidas\", \"callback_data\": \"bebidas\" },\n        { \"text\": \"🍔 Comidas\", \"callback_data\": \"comidas\" }\n      ],\n      [\n        { \"text\": \"🍿 Snacks\", \"callback_data\": \"snacks\" }\n      ]\n    ]\n  }\n}",
+        "options": {}
+      },
+      "id": "afa0ed65-a38f-4826-8843-1669a1706e8e",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        464,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I",
+          "mode": "list",
+          "cachedResultName": "DeliveryBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1476993683,
+          "mode": "list",
+          "cachedResultName": "CARRITO",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit#gid=1476993683"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ $json.chatId }}",
+            "detalle": "",
+            "total": "0",
+            "estado": "cancelado"
+          },
+          "matchingColumns": [
+            "chat_id"
+          ],
+          "schema": [
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "detalle",
+              "displayName": "detalle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "total",
+              "displayName": "total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "b3774b59-0367-4366-abb6-0be8eb5afa75",
+      "name": "Cancelar Carrito en Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        464,
+        592
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "JzZ0r8hPGSWmBsYw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('When Executed by Another Workflow').item.json.chatId }}",
+        "text": "❌ Tu carrito fue cancelado y vaciado. Cuando quieras, escribe *Hola* para empezar un nuevo pedido. 😊",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "e7a81632-7e18-47ab-af34-7f7cfd683756",
+      "name": "Aviso: Carrito Cancelado",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        592
+      ],
+      "webhookId": "9a8f8b8e-23b1-4a45-b2ce-284f43550f5b",
+      "credentials": {
+        "telegramApi": {
+          "id": "CrAL9EiCdLr9gENv",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I",
+          "mode": "list",
+          "cachedResultName": "DeliveryBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1476993683,
+          "mode": "list",
+          "cachedResultName": "CARRITO",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit#gid=1476993683"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "chat_id",
+              "lookupValue": "={{ $json.chatId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "178785a4-4d85-44f9-a817-185ab54dd7a2",
+      "name": "Leer Pedido a Cancelar",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        464,
+        880
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "JzZ0r8hPGSWmBsYw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "estado-recibido",
+              "leftValue": "={{ $json.estado }}",
+              "rightValue": "recibido",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e3a0c8fb-2567-4fd4-93cb-d89063ffe1ed",
+      "name": "Se Puede Cancelar?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        896
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I",
+          "mode": "list",
+          "cachedResultName": "DeliveryBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1476993683,
+          "mode": "list",
+          "cachedResultName": "CARRITO",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit#gid=1476993683"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ $json.chat_id }}",
+            "estado": "cancelado"
+          },
+          "matchingColumns": [
+            "chat_id"
+          ],
+          "schema": [
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "16d66e5a-b180-4a62-adb8-a86f4924114d",
+      "name": "Marcar Pedido Cancelado",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        912,
+        752
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "JzZ0r8hPGSWmBsYw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Leer Pedido a Cancelar').item.json.chat_id }}",
+        "text": "=✅ Tu pedido *#{{ $('Leer Pedido a Cancelar').item.json.id_pedido }}* fue *cancelado* correctamente. No se realizará ningún cobro. ¡Esperamos verte pronto! 🙌",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "ea8cc798-ef38-4656-83ea-2efd1934f686",
+      "name": "Aviso: Pedido Cancelado (Cliente)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1120,
+        752
+      ],
+      "webhookId": "a8f93052-2028-4643-8275-7ff506d31aa8",
+      "credentials": {
+        "telegramApi": {
+          "id": "CrAL9EiCdLr9gENv",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "8438660376",
+        "text": "=🚫 El cliente canceló el pedido *#{{ $('Leer Pedido a Cancelar').item.json.id_pedido }}* (aún en estado Recibido). No lo prepares.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "8fb26da3-65dc-4697-8ca6-ef652cedded5",
+      "name": "Aviso: Cancelación (Admin)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1360,
+        752
+      ],
+      "webhookId": "2bdb4462-55e8-4b11-9377-371f68b8ca5c",
+      "credentials": {
+        "telegramApi": {
+          "id": "CrAL9EiCdLr9gENv",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Leer Pedido a Cancelar').item.json.chat_id || $('When Executed by Another Workflow').item.json.chatId }}",
+        "text": "⏰ Tu pedido ya está *en preparación o en camino*, por lo que no se puede cancelar automáticamente. Por favor comunícate con el restaurante para gestionarlo. 🙏",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "1e090d99-5eb5-4cde-ae81-4acc9abd912b",
+      "name": "Aviso: No se Puede Cancelar",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        992,
+        960
+      ],
+      "webhookId": "dc9391bc-76d6-4ce7-b76f-faa979a9fe5b",
+      "credentials": {
+        "telegramApi": {
+          "id": "CrAL9EiCdLr9gENv",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I",
+          "mode": "list",
+          "cachedResultName": "DeliveryBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "MENU",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "290e0e2d-6dc5-4d9e-8a07-127a6143be77",
+      "name": "Buscar Productos MENU",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        384,
+        1136
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "JzZ0r8hPGSWmBsYw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const originalData = String($('When Executed by Another Workflow').item.json.data || '').trim();\nconst chatId = $('When Executed by Another Workflow').item.json.chatId;\n\n// Si por error entra un comando en lugar de una categoría real, no buscamos nada\nif (originalData.startsWith('action=') || originalData.startsWith('p_id=')) {\n  return { json: { chat_id: chatId, texto: \"Por favor selecciona una opción válida del menú.\", reply_markup: JSON.stringify({ inline_keyboard: [] }) } };\n}\n\nconst cat = originalData;\nconst todosLosProductos = $input.all().map(item => item.json);\n\nconst productosFiltrados = todosLosProductos.filter(p => \n  p.categoria && String(p.categoria).trim().toLowerCase() === cat.toLowerCase()\n);\n\nconst botones = productosFiltrados.map(p => ([{\n  text: `${p.nombre} - $${p.precio}`,\n  callback_data: `p_id=${p.id_producto}`\n}]));\n\n// Botón para regresar al menú principal\nbotones.push([{ text: '⬅️ Volver al Menú', callback_data: 'action=menu' }]);\n\nreturn {\n  json: {\n    chat_id: chatId,\n    texto: productosFiltrados.length\n      ? `📋 *Productos en ${cat.toUpperCase()}:*\\nElige uno para continuar 👇`\n      : `😕 No hay productos disponibles en *${cat}* por ahora.`,\n    reply_markup: JSON.stringify({ inline_keyboard: botones })\n  }\n};"
+      },
+      "id": "e3e365f3-25db-4b42-b7e1-c958ed88c430",
+      "name": "Filtrar y Armar Botones",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        1136
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "chatid-no-vacio",
+              "leftValue": "={{ $json.chat_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "dbd65dea-d327-41a9-9ac4-03ba71572282",
+      "name": "chat_id Válido?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        848,
+        1136
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot8487284251:AAFf534XZGimwVNPY13H-3ONP9l-vOTeqkY/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $json.chat_id, text: $json.texto, parse_mode: 'Markdown', reply_markup: JSON.parse($json.reply_markup) }) }}",
+        "options": {}
+      },
+      "id": "1be659f7-3d7e-4ffb-9703-035d3124b1d9",
+      "name": "Mostrar Productos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1168,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "horario-abierto",
+              "leftValue": "={{ $now.setZone('America/Bogota').weekday <= 5 && $now.setZone('America/Bogota').hour >= 8 && $now.setZone('America/Bogota').hour < 17 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "06511a98-af73-47f4-9102-352ea97f7f58",
+      "name": "Dentro de Horario?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        208
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Switch Accion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Accion": {
+      "main": [
+        [
+          {
+            "node": "Procesar Pedido e ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Dentro de Horario?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Cancelar Carrito en Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Leer Pedido a Cancelar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Buscar Productos MENU",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesar Pedido e ID": {
+      "main": [
+        [
+          {
+            "node": "Leer Stock Actual",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Stock Actual": {
+      "main": [
+        [
+          {
+            "node": "Calcular Nuevo Stock",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular Nuevo Stock": {
+      "main": [
+        [
+          {
+            "node": "Hay Stock y Disponible?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hay Stock y Disponible?": {
+      "main": [
+        [
+          {
+            "node": "Actualizar Stock",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aviso: Sin Stock",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar Stock": {
+      "main": [
+        [
+          {
+            "node": "Guardar en Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar en Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Armar Resumen Carrito",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar Resumen Carrito": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Confirmar Carrito",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Carrito Con Items?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Carrito Con Items?": {
+      "main": [
+        [
+          {
+            "node": "Estampar ID en Carrito",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aviso: Carrito Vacío",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Estampar ID en Carrito": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Confirmar al Cliente (Telegram)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cancelar Carrito en Sheets": {
+      "main": [
+        [
+          {
+            "node": "Aviso: Carrito Cancelado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Pedido a Cancelar": {
+      "main": [
+        [
+          {
+            "node": "Se Puede Cancelar?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Se Puede Cancelar?": {
+      "main": [
+        [
+          {
+            "node": "Marcar Pedido Cancelado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aviso: No se Puede Cancelar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar Pedido Cancelado": {
+      "main": [
+        [
+          {
+            "node": "Aviso: Pedido Cancelado (Cliente)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aviso: Pedido Cancelado (Cliente)": {
+      "main": [
+        [
+          {
+            "node": "Aviso: Cancelación (Admin)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Productos MENU": {
+      "main": [
+        [
+          {
+            "node": "Filtrar y Armar Botones",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar y Armar Botones": {
+      "main": [
+        [
+          {
+            "node": "chat_id Válido?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "chat_id Válido?": {
+      "main": [
+        [
+          {
+            "node": "Mostrar Productos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dentro de Horario?": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aviso: Cafetería Cerrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "237fc9ca-8a90-45fb-a864-0bb116e17a8a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8ad2e70021d0a07c9ad35b9eb0095c5bd2180fde5c516c5acbaae896df3a06b4"
+  },
+  "nodeGroups": [],
+  "id": "HF3hebxbks1Mtci4",
+  "tags": []
+}

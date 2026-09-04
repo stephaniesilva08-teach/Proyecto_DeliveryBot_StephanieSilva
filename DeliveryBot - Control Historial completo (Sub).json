@@ -1,0 +1,194 @@
+{
+  "name": "DeliveryBot - Control Historial completo (Sub)",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "6e65dae6-6751-4698-8ac0-138e6f2a589b",
+      "name": "Telegram Trigger (Consulta Historial)",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e229c9ef-bce7-4971-bf5a-e7178044737f",
+              "leftValue": "={{ $json.callback_query.data }}",
+              "rightValue": "ver_historial",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f624dc9a-edc4-4849-91da-7a2b21b393dc",
+      "name": "Es Botón Historial?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1YOy5qKHM1GZ30ZU68ZUrjLR5dOuIyy5ZtVUbM7b4U5I",
+          "cachedResultName": "DeliveryBot_DB"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1476993683",
+          "cachedResultName": "CARRITO"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "chat_id",
+              "lookupValue": "={{ $('Telegram Trigger (Consulta Historial)').item.json.callback_query.message.chat.id }}"
+            }
+          ]
+        },
+        "options": {
+          "outputFormatting": {
+            "values": {
+              "general": "FORMATTED_VALUE",
+              "date": "FORMATTED_STRING"
+            }
+          }
+        }
+      },
+      "id": "4c971ef7-16a4-4b8a-a54a-dcf4440c9234",
+      "name": "Buscar Pedidos en HISTORIAL",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        0
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "JzZ0r8hPGSWmBsYw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst chatId = $('Telegram Trigger (Consulta Historial)').first().json.callback_query.message.chat.id;\n\nif (!items || items.length === 0 || !items[0].json.id_pedido) {\n  return [{\n    json: {\n      chat_id: chatId,\n      mensaje: '📜 *Historial de Pedidos*\\n\\nActualmente no tienes pedidos registrados en tu historial.'\n    }\n  }];\n}\n\nlet texto = '📜 *Tus Últimos Pedidos Realizados:*\\n\\n';\n\n// Mostrar los últimos 5 pedidos ordenados\nconst ultimos = items.slice(-5).reverse();\n\nultimos.forEach(item => {\n  const row = item.json;\n  texto += '🔹 *Pedido #' + row.id_pedido + '* - _' + row.fecha_entrega + '_\\n';\n  texto += '🛒 *Detalle:* ' + row.detalle + '\\n';\n  texto += '📍 *Dirección:* ' + row.datos_entrega + '\\n';\n  texto += '💵 *Total:* $' + row.total + '\\n';\n  texto += '----------------------------------\\n';\n});\n\nreturn [{\n  json: {\n    chat_id: chatId,\n    mensaje: texto\n  }\n}];"
+      },
+      "id": "337b2db1-8b0a-4d65-b8d4-de96a5af78f0",
+      "name": "Formatear Mensaje Historial",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.mensaje }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "56d24d2a-b945-4fcb-99e7-62d0e09ab434",
+      "name": "Enviar Historial al Cliente",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        896,
+        0
+      ],
+      "webhookId": "655a485c-6f88-4bfa-bc39-838b13c95caf",
+      "credentials": {
+        "telegramApi": {
+          "id": "CrAL9EiCdLr9gENv",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger (Consulta Historial)": {
+      "main": [
+        [
+          {
+            "node": "Es Botón Historial?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es Botón Historial?": {
+      "main": [
+        [
+          {
+            "node": "Buscar Pedidos en HISTORIAL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Pedidos en HISTORIAL": {
+      "main": [
+        [
+          {
+            "node": "Formatear Mensaje Historial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Mensaje Historial": {
+      "main": [
+        [
+          {
+            "node": "Enviar Historial al Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "08acc62e-d8aa-4307-bfa6-be40127a8402",
+  "meta": {
+    "instanceId": "8ad2e70021d0a07c9ad35b9eb0095c5bd2180fde5c516c5acbaae896df3a06b4"
+  },
+  "nodeGroups": [],
+  "id": "2YeUWKAoUwvdFni5",
+  "tags": []
+}

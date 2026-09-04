@@ -1,0 +1,417 @@
+{
+  "name": "DeliveryBot - Principal-Completoo",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message",
+          "callback_query"
+        ],
+        "additionalFields": {}
+      },
+      "id": "796012ee-71ac-4ffa-b3de-7e4edf593e49",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        384
+      ],
+      "webhookId": "40ea55c5-8d35-4c8b-bc57-e7f4abe518eb",
+      "credentials": {
+        "telegramApi": {
+          "id": "CrAL9EiCdLr9gENv",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const u = $json;\nconst cb = u.callback_query;\nconst msg = u.message;\nconst text = (msg && msg.text ? String(msg.text) : '').trim();\nconst chatId = msg ? msg.chat.id : (cb && cb.message ? cb.message.chat.id : null);\nconst ADMIN = '8438660376';\n\nlet ruta = 'DIRECCIONES';\n\nif (cb && cb.data) {\n  const d = String(cb.data);\n  // Botones de estado del admin (estado_preparacion / estado_encamino / estado_entregado)\n  if (d.startsWith('estado_')) {\n    ruta = 'COCINA';\n  } else if (d.startsWith('ver_historial')) {\n    // Historial ahora se dispara con el BOTÓN (solo admin)\n    ruta = (String(chatId) === ADMIN) ? 'HISTORIAL' : 'PEDIDOS';\n  } else {\n    ruta = 'PEDIDOS';\n  }\n} else if (text) {\n  const t = text.toLowerCase();\n  if (t === '/start' || t.includes('hola') || t.includes('menu') || t.includes('menú') || t.includes('buenas')) {\n    ruta = 'MENU';\n  } else {\n    ruta = 'DIRECCIONES';\n  }\n}\n\nreturn [{ json: Object.assign({}, u, { ruta: ruta }) }];"
+      },
+      "id": "54923867-a1da-40f7-bb86-f770326ac0d2",
+      "name": "Clasificar Ruta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r-cocina",
+                    "leftValue": "={{ $json.ruta }}",
+                    "rightValue": "COCINA",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Botón Estado (Cocina)"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r-historial",
+                    "leftValue": "={{ $json.ruta }}",
+                    "rightValue": "HISTORIAL",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Botón Historial (Admin)"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r-pedidos",
+                    "leftValue": "={{ $json.ruta }}",
+                    "rightValue": "PEDIDOS",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Menú/Pedidos"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r-menu",
+                    "leftValue": "={{ $json.ruta }}",
+                    "rightValue": "MENU",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Bienvenida"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "Mensaje Cliente (Direcciones)"
+        }
+      },
+      "id": "eb1b2235-691c-4b42-b149-846da6fd2749",
+      "name": "Enrutar Principal",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        448,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "8VoiQOaEYRFnfq8W",
+          "cachedResultName": "DeliveryBot - Cocina (Sub)"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "c0e26b6b-adde-42d8-a885-d2268ce6738a",
+      "name": "Ejecutar Sub: Cocina",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        672,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "2YeUWKAoUwvdFni5",
+          "cachedResultName": "DeliveryBot - Control Historial (Sub)"
+        },
+        "options": {}
+      },
+      "id": "a974bc80-197d-4051-b7c4-a326ca374350",
+      "name": "Ejecutar Sub: Historial",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        672,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "HF3hebxbks1Mtci4",
+          "cachedResultName": "Sistema de Pedidos - Completo"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "data": "={{ $json.callback_query.data }}",
+            "chatId": "={{ $json.callback_query.message.chat.id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "chatId",
+              "displayName": "chatId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "32e32281-6a67-48f7-99cf-2f618ab77177",
+      "name": "Call 'Sistema de Pedidos - Completo'",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        672,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=¡Hola! 👋 Bienvenido a DeliveryBot. Selecciona una opción para realizar tu pedido:",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "🥤 Bebidas",
+                    "additionalFields": {
+                      "callback_data": "bebidas"
+                    }
+                  },
+                  {
+                    "text": "🥪 Comidas",
+                    "additionalFields": {
+                      "callback_data": "comidas"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "🍿 Snacks",
+                    "additionalFields": {
+                      "callback_data": "snacks"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {}
+      },
+      "id": "6fcc1106-5ebc-486d-8e44-aca4d82e7011",
+      "name": "Enviar Bienvenida y Menú",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        576
+      ],
+      "webhookId": "36aacfb6-5754-483d-b971-51632e8833bd",
+      "credentials": {
+        "telegramApi": {
+          "id": "CrAL9EiCdLr9gENv",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "nxxx5hMHwKakwcUj",
+          "cachedResultName": "DeliveryBot - Direcciones (Sub)"
+        },
+        "options": {}
+      },
+      "id": "b6d13605-f3b3-4253-bba0-abfac15366a3",
+      "name": "Ejecutar Sub: Direcciones",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        672,
+        768
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Clasificar Ruta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clasificar Ruta": {
+      "main": [
+        [
+          {
+            "node": "Enrutar Principal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrutar Principal": {
+      "main": [
+        [
+          {
+            "node": "Ejecutar Sub: Cocina",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ejecutar Sub: Historial",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call 'Sistema de Pedidos - Completo'",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Bienvenida y Menú",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ejecutar Sub: Direcciones",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "d6976460-0364-4ba0-a99b-a656b3b14c41",
+  "meta": {
+    "instanceId": "8ad2e70021d0a07c9ad35b9eb0095c5bd2180fde5c516c5acbaae896df3a06b4"
+  },
+  "nodeGroups": [
+    {
+      "id": "ae694249-e4f0-4863-86d9-18aa09de9d11",
+      "name": "Enrutamiento",
+      "nodeIds": [
+        "54923867-a1da-40f7-bb86-f770326ac0d2",
+        "eb1b2235-691c-4b42-b149-846da6fd2749"
+      ],
+      "description": "Un solo bot: clasifica cada update y lo envía a la sub correcta — botones de estado→Cocina, botón Historial (solo admin)→Historial, menú/pedidos→"
+    }
+  ],
+  "id": "J0wLXAoOoqbj82qf",
+  "tags": []
+}
